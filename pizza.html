@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pizza Ordering</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .pizza-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .pizza-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .order-button {
+      border-radius: 50px;
+      padding: 0.5rem 1rem;
+      transition: all 0.2s;
+    }
+    .cart-item {
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 1rem;
+      margin-bottom: 1rem;
+      transition: opacity 0.3s;
+    }
+    .cart-badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    .cart-options {
+      margin-left: 1.5rem;
+      font-size: 0.875rem;
+      color: #6c757d;
+    }
+    .cart-actions {
+      margin-left: 1.5rem;
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+    }
+    .cart-actions button {
+      border: none;
+      background: none;
+      color: #6c757d;
+      font-size: 0.875rem;
+      padding: 0;
+      margin-right: 1rem;
+      cursor: pointer;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+    }
+    .cart-actions button:hover {
+      color: #212529;
+    }
+    .delete-icon {
+      color: #dc3545;
+      margin-right: 4px;
+    }
+    .delete-icon:hover {
+      color: #b02a37;
+    }
+    .no-address {
+      background-color: #f8f9fa;
+      border-radius: 0.375rem;
+    }
+    .order-total {
+      background-color: #212529;
+      color: white;
+      border-radius: 0.375rem;
+      padding: 1rem;
+    }
+    .size-option {
+      cursor: pointer;
+      border: 1px solid #dee2e6;
+      padding: 8px 16px;
+      border-radius: 4px;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      display: inline-block;
+      transition: all 0.2s;
+    }
+    .size-option:hover {
+      background-color: #f8f9fa;
+    }
+    .size-option.active {
+      background-color: #212529;
+      color: white;
+      border-color: #212529;
+    }
+    .toppings-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .topping-item {
+      border: 1px solid #dee2e6;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .topping-item:hover {
+      background-color: #f8f9fa;
+    }
+    .topping-item.selected {
+      background-color: #e9ecef;
+      font-weight: 500;
+    }
+    .cart-empty {
+      text-align: center;
+      padding: 2rem 0;
+      color: #6c757d;
+    }
+    .cart-added-animation {
+      animation: fadeIn 0.5s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (min-width: 992px) {
+      .menu-section {
+        width: 66.666667%;
+        padding-right: 1rem;
+      }
+      .cart-section {
+        width: 33.333333%;
+        border-left: 1px solid #dee2e6;
+        padding-left: 1rem;
+      }
+    }
+	
+	        .error-message {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        
+            /* Fix for the z-index issue */
+    .address-details {
+      position: relative;
+      z-index: 0; /* Lower z-index than the autocomplete dropdown */
+    }
+    
+    .pac-container {
+      z-index: 1050 !important; /* Higher z-index to appear above other elements */
+    }
+    
+    /* Additional styling for the address section */
+    #locationField {
+      z-index: 1;
+    }
+    
+    .input-group {
+      position: relative;
+      z-index: 1;
+    }
+
+	
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Menu Section -->
+      <div class="col-lg-8 p-4 menu-section">
+        <!-- Regular Pizza Section -->
+        <div class="mb-4">
+          <h1 class="fw-bold">PIZZA</h1>
+          <p class="text-secondary">Thin crust available for an additional charge.</p>
+          
+          <div class="row row-cols-1 row-cols-md-2 g-4 mt-2">
+            
+            <!-- Pizza Item 4 -->
+            <div class="col">
+              <div class="card pizza-card" data-bs-toggle="modal" data-bs-target="#pizzaModal" 
+                   data-pizza-name="Three Toppings Pizza" 
+                   data-pizza-desc="Make it your own with three delicious toppings." 
+                   data-pizza-price="14.99"
+                   data-pizza-img=""
+                   data-pizza-type="regular">
+                <div class="card-body">
+                  <h5 class="card-title fw-semibold">Three Toppings Pizza</h5>
+                  <p class="card-text fw-semibold mt-3">$14.99</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Pizza Item 5 -->
+            <div class="col">
+              <div class="card pizza-card" data-bs-toggle="modal" data-bs-target="#pizzaModal" 
+                   data-pizza-name="Sheet Pan Pizza" 
+                   data-pizza-desc="Classic cheese or create your own pizza. Great for parties!" 
+                   data-pizza-price="23.99"
+                   data-pizza-img=""
+                   data-pizza-type="regular">
+                <div class="card-body">
+                  <h5 class="card-title fw-semibold">Sheet Pan Pizza</h5>
+                  <p class="card-text text-secondary small">Classic cheese or create your own pizza.</p>
+                  <p class="card-text fw-semibold mt-3">$23.99</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Specialty Pizza Section -->
+        <div class="mb-4">
+          <h1 class="fw-bold">SPECIALTY PIZZA</h1>
+          <p class="text-secondary">Thin crust available for an additional charge.</p>
+          
+          <div class="row row-cols-1 row-cols-md-2 g-4 mt-2">
+            <!-- Specialty Pizza 1 -->
+            <div class="col">
+              <div class="card pizza-card" data-bs-toggle="modal" data-bs-target="#pizzaModal" 
+                   data-pizza-name="Steve's Special Pizza" 
+                   data-pizza-desc="Pepperoni, peppers, onions, mushrooms, sausage & hamburger." 
+                   data-pizza-price="14.99"
+                   data-pizza-img="/api/placeholder/400/300"
+                   data-pizza-type="specialty">
+                <div class="card-body d-flex justify-content-between">
+                  <div>
+                    <h5 class="card-title fw-semibold">Steve's Special Pizza</h5>
+                    <p class="card-text text-secondary small">Pepperoni, peppers, onions, mushrooms, sausage & hamburger.</p>
+                    <p class="card-text fw-semibold mt-3">$14.99</p>
+                  </div>
+                  <img src="/api/placeholder/100/100" alt="Pizza" class="rounded" width="100" height="100">
+                </div>
+              </div>
+            </div>
+            
+            <!-- Specialty Pizza 2 -->
+            <div class="col">
+              <div class="card pizza-card" data-bs-toggle="modal" data-bs-target="#pizzaModal" 
+                   data-pizza-name="Meat Lovers Pizza" 
+                   data-pizza-desc="Pepperoni, sausage, hamburger, ham & bacon." 
+                   data-pizza-price="14.99"
+                   data-pizza-img=""
+                   data-pizza-type="specialty">
+                <div class="card-body">
+                  <h5 class="card-title fw-semibold">Meat Lovers Pizza</h5>
+                  <p class="card-text text-secondary small">Pepperoni, sausage, hamburger, ham & bacon.</p>
+                  <p class="card-text fw-semibold mt-3">$14.99</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Cart Section -->
+      <div class="col-lg-4 p-4 bg-white cart-section">
+        <div class="sticky-top pt-2">
+          <h2 class="fw-bold mb-4">Your Order</h2>
+          
+          <!-- Delivery Options -->
+          <div class="d-flex gap-2 mb-4">
+            <button id="deliveryBtn" class="btn btn-dark flex-grow-1 order-button text-center">
+              <div>Delivery</div>
+              <div class="small">Order ahead</div>
+            </button>
+            <button id="pickupBtn" class="btn btn-light flex-grow-1 order-button text-center">
+              <div>Pickup</div>
+              <div class="small">Order ahead</div>
+            </button>
+          </div>
+          
+          <!-- Address -->
+          <div id="addressSection" class="d-flex justify-content-between align-items-center p-3 no-address mb-4">
+            <div class="d-flex align-items-center gap-2">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+              </svg>
+              <span>No address</span>
+            </div>
+            <button class="btn btn-sm text-secondary">Add address</button>
+          </div>
+          
+          <!-- Cart Items -->
+          <div id="cartItems" class="mb-4">
+            <!-- Empty cart message (initially hidden) -->
+            <div id="emptyCart" class="cart-empty d-none">
+              <p>Your cart is empty</p>
+              <p class="small">Add items from the menu to get started</p>
+            </div>
+            
+            <!-- Sample cart items will be added here dynamically -->
+          </div>
+          
+          <!-- Order Total -->
+          <div class="order-total">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold fs-5">ORDER AHEAD</div>
+                <div id="orderTotal">$0.00</div>
+              </div>
+              <div class="bg-white text-dark cart-badge" id="cartCount">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- Pizza Modal -->
+<div class="modal fade" id="pizzaModal" tabindex="-1" aria-labelledby="pizzaModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold" id="pizzaModalLabel">Pizza Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6">
+            <div id="pizzaImage" class="mb-3">
+              <img src="/api/placeholder/400/300" alt="Pizza" class="img-fluid rounded">
+            </div>
+            <h3 id="pizzaName" class="fw-bold"></h3>
+            <p id="pizzaDesc" class="text-secondary"></p>
+            <h4 class="mt-3 mb-2 fw-bold" id="pizzaPrice"></h4>
+          </div>
+          <div class="col-md-6">
+            <h5 class="mb-3">Customize Your Order</h5>
+            <!-- Quantity Selector - New Addition -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Quantity</label>
+              <div class="d-flex align-items-center">
+                <button id="modalQtyDecrease" class="btn btn-sm btn-outline-secondary" style="padding: 0 8px; font-size: 16px; line-height: 1.5;">-</button>
+                <span id="modalQuantityDisplay" class="mx-3 fw-bold">1</span>
+                <button id="modalQtyIncrease" class="btn btn-sm btn-outline-secondary" style="padding: 0 8px; font-size: 16px; line-height: 1.5;">+</button>
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Size</label>
+              <div>
+                <div class="size-option active" data-price="0" data-size="Small (8\")">Small (8")</div>
+                <div class="size-option" data-price="2" data-size="Medium (12\")">Medium (12")</div>
+                <div class="size-option" data-price="4" data-size="Large (16\")">Large (16")</div>
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Crust</label>
+              <select class="form-select" id="crustSelect">
+                <option selected>Regular Crust</option>
+                <option>Thin Crust (+$1.00)</option>
+                <option>Stuffed Crust (+$2.50)</option>
+              </select>
+            </div>
+            <div id="toppingsSection" class="mb-4">
+              <label class="form-label fw-semibold">Toppings</label>
+              <div class="toppings-list">
+                <div class="topping-item">Pepperoni</div>
+                <div class="topping-item">Sausage</div>
+                <div class="topping-item">Mushrooms</div>
+                <div class="topping-item">Onions</div>
+                <div class="topping-item">Green Peppers</div>
+                <div class="topping-item">Black Olives</div>
+                <div class="topping-item">Pineapple</div>
+                <div class="topping-item">Bacon</div>
+                <div class="topping-item">Ham</div>
+                <div class="topping-item">Extra Cheese</div>
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Special Instructions</label>
+              <textarea class="form-control" id="specialInstructions" rows="2" placeholder="Add any special requests"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-dark" id="addToOrderBtn">Add to Order - <span id="modalTotalPrice">$12.49</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle with Popper -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  
+	<script>
+
+// This code adds edit functionality to the pizza cart with error handling
+document.addEventListener('DOMContentLoaded', function() {
+  // Global variables
+  let currentPizzaName = '';
+  let currentPizzaDesc = '';
+  let currentPizzaPrice = 0;
+  let currentPizzaImg = '';
+  let selectedSize = '';
+  let orderTotal = 0;
+  let itemCount = 0;
+  let isEditMode = false;
+  let editingCartItem = null;
+  let currentQuantity = 1; // New variable to track current quantity in modal
+  
+  // Make sure modal element exists before initializing
+  const modalElement = document.getElementById('pizzaModal');
+  if (!modalElement) {
+    console.error('Pizza modal element not found!');
+    return;
+  }
+  
+  const modal = new bootstrap.Modal(modalElement);
+  
+  // Initialize cart
+  checkEmptyCart();
+  
+  // Pizza Modal functionality
+  const pizzaCards = document.querySelectorAll('.pizza-card');
+  
+  pizzaCards.forEach(card => {
+    card.addEventListener('click', function() {
+      // Reset edit mode
+      isEditMode = false;
+      editingCartItem = null;
+      
+      // Reset modal title to default
+      const modalLabel = document.getElementById('pizzaModalLabel');
+      if (modalLabel) {
+        modalLabel.textContent = 'Pizza Details';
+      }
+      
+      // Get pizza data from data attributes
+      currentPizzaName = this.getAttribute('data-pizza-name');
+      currentPizzaDesc = this.getAttribute('data-pizza-desc');
+      currentPizzaPrice = parseFloat(this.getAttribute('data-pizza-price'));
+      currentPizzaImg = this.getAttribute('data-pizza-img');
+      const type = this.getAttribute('data-pizza-type');
+      
+      // Reset selections and quantity
+      currentQuantity = 1;
+      updateModalQuantityDisplay();
+      
+      document.querySelectorAll('.size-option').forEach(opt => {
+        if (opt.getAttribute('data-size') === 'Small (8")') {
+          opt.classList.add('active');
+          // Use textContent instead of data attribute for display
+          selectedSize = opt.textContent;
+        } else {
+          opt.classList.remove('active');
+        }
+      });
+      
+      document.querySelectorAll('.topping-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      
+      const crustSelect = document.getElementById('crustSelect');
+      if (crustSelect) {
+        crustSelect.selectedIndex = 0;
+      }
+      
+      const specialInstructions = document.getElementById('specialInstructions');
+      if (specialInstructions) {
+        specialInstructions.value = '';
+      }
+      
+      // Update modal content
+      const pizzaNameElement = document.getElementById('pizzaName');
+      const pizzaDescElement = document.getElementById('pizzaDesc');
+      const pizzaPriceElement = document.getElementById('pizzaPrice');
+      const modalTotalPriceElement = document.getElementById('modalTotalPrice');
+      
+      if (pizzaNameElement) pizzaNameElement.textContent = currentPizzaName;
+      if (pizzaDescElement) pizzaDescElement.textContent = currentPizzaDesc;
+      if (pizzaPriceElement) pizzaPriceElement.textContent = '$' + currentPizzaPrice.toFixed(2);
+      
+      // Update total price with current quantity
+      updateModalTotalPrice();
+      
+      // Show/hide image based on availability
+      const imageContainer = document.getElementById('pizzaImage');
+      if (imageContainer) {
+        if (currentPizzaImg) {
+          imageContainer.style.display = 'block';
+          const img = imageContainer.querySelector('img');
+          if (img) {
+            img.src = currentPizzaImg;
+          }
+        } else {
+          imageContainer.style.display = 'none';
+        }
+      }
+      
+      // Show/hide toppings section based on pizza type
+      const toppingsSection = document.getElementById('toppingsSection');
+      if (toppingsSection) {
+        if (type === 'specialty') {
+          toppingsSection.style.display = 'none';
+        } else {
+          toppingsSection.style.display = 'block';
+        }
+      }
+    });
+  });
+  
+  // Size option selection
+  const sizeOptions = document.querySelectorAll('.size-option');
+  sizeOptions.forEach(option => {
+    option.addEventListener('click', function() {
+      // Remove active class from all options
+      sizeOptions.forEach(opt => opt.classList.remove('active'));
+      // Add active class to selected option
+      this.classList.add('active');
+      
+      // Use textContent instead of data attribute for display
+      selectedSize = this.textContent;
+      
+      // Update modal total price
+      updateModalTotalPrice();
+    });
+  });
+  
+  // Topping selection
+  const toppingItems = document.querySelectorAll('.topping-item');
+  toppingItems.forEach(item => {
+    item.addEventListener('click', function() {
+      this.classList.toggle('selected');
+    });
+  });
+  
+  // Function to update modal total price based on selected options and quantity
+  function updateModalTotalPrice() {
+    // Get active size option and its additional price
+    const activeSizeOption = document.querySelector('.size-option.active');
+    const additionalPrice = activeSizeOption ? 
+      parseFloat(activeSizeOption.getAttribute('data-price')) : 0;
+    
+    // Calculate unit price
+    const unitPrice = currentPizzaPrice + additionalPrice;
+    
+    // Calculate total price based on quantity
+    const totalPrice = (unitPrice * currentQuantity).toFixed(2);
+    
+    // Update modal total price display
+    const modalTotalPriceElement = document.getElementById('modalTotalPrice');
+    if (modalTotalPriceElement) {
+      modalTotalPriceElement.textContent = '$' + totalPrice;
+    }
+    
+    // Update button text
+    const addToOrderBtn = document.getElementById('addToOrderBtn');
+    if (addToOrderBtn) {
+      addToOrderBtn.textContent = isEditMode ? 
+        'Update Order - $' + totalPrice : 
+        'Add to Order - $' + totalPrice;
+    }
+  }
+  
+  // Function to update modal quantity display
+  function updateModalQuantityDisplay() {
+    const modalQuantityDisplay = document.getElementById('modalQuantityDisplay');
+    if (modalQuantityDisplay) {
+      modalQuantityDisplay.textContent = currentQuantity;
+    }
+  }
+  
+  // Quantity increase button in modal
+  document.getElementById('modalQtyIncrease').addEventListener('click', function() {
+    currentQuantity++;
+    updateModalQuantityDisplay();
+    updateModalTotalPrice();
+  });
+  
+  // Quantity decrease button in modal
+  document.getElementById('modalQtyDecrease').addEventListener('click', function() {
+    if (currentQuantity > 1) {
+      currentQuantity--;
+      updateModalQuantityDisplay();
+      updateModalTotalPrice();
+    }
+  });
+  
+  // Add/Update Order button functionality
+  const addToOrderBtn = document.getElementById('addToOrderBtn');
+  if (addToOrderBtn) {
+    addToOrderBtn.addEventListener('click', function() {
+      // Get selected options
+      const selectedToppings = [];
+      document.querySelectorAll('.topping-item.selected').forEach(item => {
+        selectedToppings.push(item.textContent);
+      });
+      
+      const crustSelect = document.getElementById('crustSelect');
+      const selectedCrust = crustSelect ? crustSelect.value : 'Regular Crust';
+      
+      const specialInstructionsElement = document.getElementById('specialInstructions');
+      const specialInstructions = specialInstructionsElement ? specialInstructionsElement.value : '';
+      
+      // Get price per unit
+      const activeSizeOption = document.querySelector('.size-option.active');
+      const additionalPrice = activeSizeOption ? 
+        parseFloat(activeSizeOption.getAttribute('data-price')) : 0;
+      const unitPrice = currentPizzaPrice + additionalPrice;
+      
+      if (isEditMode && editingCartItem) {
+        // Update the existing cart item
+        updateCartItem(
+          editingCartItem, 
+          currentPizzaName, 
+          unitPrice, 
+          currentQuantity,
+          selectedSize, 
+          selectedCrust, 
+          selectedToppings, 
+          specialInstructions
+        );
+      } else {
+        // Create cart item or update existing one
+        addOrUpdateCartItem(
+          currentPizzaName, 
+          unitPrice, 
+          currentQuantity,
+          selectedSize, 
+          selectedCrust, 
+          selectedToppings, 
+          specialInstructions
+        );
+      }
+      
+      // Reset edit mode
+      isEditMode = false;
+      editingCartItem = null;
+      
+      // Close the modal
+      modal.hide();
+    });
+  }
+  
+  // Function to update an existing cart item after editing
+  function updateCartItem(cartItem, name, unitPrice, newQuantity, size, crust, toppings, instructions) {
+    // Build toppings string
+    let toppingsHtml = '';
+    if (toppings.length > 0) {
+      toppingsHtml = '<p>+ Whole: ' + toppings.join(', ') + '</p>';
+    }
+    
+    // Special instructions
+    let instructionsHtml = '';
+    if (instructions) {
+      instructionsHtml = '<p>Note: ' + instructions + '</p>';
+    }
+    
+    // Get the current quantity
+    const quantityDisplay = cartItem.querySelector('.quantity-display');
+    if (!quantityDisplay) return;
+    
+    const oldQuantity = parseInt(quantityDisplay.textContent);
+    
+    // Update the quantity
+    quantityDisplay.textContent = newQuantity;
+    
+    // Calculate the new total price
+    const totalPrice = (unitPrice * newQuantity).toFixed(2);
+    
+    // Update order total
+    const oldUnitPrice = parseFloat(cartItem.getAttribute('data-unit-price'));
+    const oldTotalPrice = oldUnitPrice * oldQuantity;
+    const newTotalPrice = unitPrice * newQuantity;
+    orderTotal = orderTotal - oldTotalPrice + newTotalPrice;
+    
+    // Update item count
+    itemCount = itemCount - oldQuantity + newQuantity;
+    
+    // Store the new unit price
+    cartItem.setAttribute('data-unit-price', unitPrice);
+    
+    // Update the cart item HTML
+    const nameElement = cartItem.querySelector('.fw-semibold.flex-grow-1.ms-3');
+    const priceElement = cartItem.querySelector('.fw-semibold:last-child');
+    const cartOptions = cartItem.querySelector('.cart-options');
+    
+    if (nameElement) nameElement.textContent = name;
+    if (priceElement) priceElement.textContent = '$' + totalPrice;
+    
+    if (cartOptions) {
+      cartOptions.innerHTML = 
+        '<p>' + size + '</p>' +
+        '<p>+ ' + crust + '</p>' +
+        toppingsHtml +
+        instructionsHtml;
+    }
+    
+    // Add highlight animation
+    cartItem.classList.add('cart-added-animation');
+    setTimeout(() => {
+      cartItem.classList.remove('cart-added-animation');
+    }, 500);
+    
+    // Update cart summary
+    updateCartSummary();
+  }
+  
+  // Function to check if an identical item already exists in the cart
+  function findExistingCartItem(name, size, crust, toppings, instructions) {
+    const cartItems = document.querySelectorAll('.cart-item');
+    
+    // Convert toppings array to sorted string for comparison
+    const toppingsStr = toppings.sort().join(',');
+    
+    for (let i = 0; i < cartItems.length; i++) {
+      const item = cartItems[i];
+      
+      // Skip the item being edited
+      if (isEditMode && item === editingCartItem) {
+        continue;
+      }
+      
+      // Get item name
+      const itemNameEl = item.querySelector('.fw-semibold.flex-grow-1.ms-3');
+      const itemName = itemNameEl ? itemNameEl.textContent : '';
+      
+      // Get item size
+      const itemSizeEl = item.querySelector('.cart-options p:first-child');
+      const itemSize = itemSizeEl ? itemSizeEl.textContent : '';
+      
+      // Get item crust
+      const itemCrustEl = item.querySelector('.cart-options p:nth-child(2)');
+      const itemCrust = itemCrustEl ? itemCrustEl.textContent.replace('+ ', '') : '';
+      
+      // Get item toppings
+      const itemToppingsEl = item.querySelector('.cart-options p:nth-child(3)');
+      let itemToppings = '';
+      if (itemToppingsEl && itemToppingsEl.textContent.includes('+ Whole:')) {
+        // Extract toppings from "+ Whole: Pepperoni, Mushrooms" format
+        const toppingsText = itemToppingsEl.textContent.replace('+ Whole: ', '');
+        itemToppings = toppingsText.split(', ').sort().join(',');
+      }
+      
+      // Get special instructions
+      const itemInstructionsEl = item.querySelector('.cart-options p:last-child');
+      let itemInstructions = '';
+      if (itemInstructionsEl && itemInstructionsEl.textContent.startsWith('Note: ')) {
+        itemInstructions = itemInstructionsEl.textContent.replace('Note: ', '');
+      }
+      
+      // Compare all properties
+      if (
+        itemName === name && 
+        itemSize === size && 
+        itemCrust === crust && 
+        itemToppings === toppingsStr && 
+        itemInstructions === instructions
+      ) {
+        return item;
+      }
+    }
+    
+    return null;
+  }
+  
+  // Function to populate modal for editing
+  function populateModalForEdit(cartItem) {
+    // Set edit mode
+    isEditMode = true;
+    editingCartItem = cartItem;
+    
+    // Update modal title to indicate edit mode
+    const modalLabel = document.getElementById('pizzaModalLabel');
+    if (modalLabel) {
+      modalLabel.textContent = 'Edit Pizza';
+    }
+    
+    // Get item details
+    const nameEl = cartItem.querySelector('.fw-semibold.flex-grow-1.ms-3');
+    const name = nameEl ? nameEl.textContent : '';
+    
+    const sizeEl = cartItem.querySelector('.cart-options p:first-child');
+    const size = sizeEl ? sizeEl.textContent : '';
+    
+    const crustEl = cartItem.querySelector('.cart-options p:nth-child(2)');
+    const crust = crustEl ? crustEl.textContent.replace('+ ', '') : 'Regular Crust';
+    
+    const toppingsEl = cartItem.querySelector('.cart-options p:nth-child(3)');
+    let toppings = [];
+    if (toppingsEl && toppingsEl.textContent.includes('+ Whole:')) {
+      toppings = toppingsEl.textContent.replace('+ Whole: ', '').split(', ');
+    }
+    
+    const instructionsEl = cartItem.querySelector('.cart-options p:last-child');
+    let instructions = '';
+    if (instructionsEl && instructionsEl.textContent.startsWith('Note: ')) {
+      instructions = instructionsEl.textContent.replace('Note: ', '');
+    }
+    
+    // Get quantity
+    const quantityDisplay = cartItem.querySelector('.quantity-display');
+    if (quantityDisplay) {
+      currentQuantity = parseInt(quantityDisplay.textContent);
+      updateModalQuantityDisplay();
+    }
+    
+    // Find the corresponding pizza card to get base details
+    let pizzaCard = null;
+    const pizzaCards = document.querySelectorAll('.pizza-card');
+    
+    for (let i = 0; i < pizzaCards.length; i++) {
+      if (pizzaCards[i].getAttribute('data-pizza-name') === name) {
+        pizzaCard = pizzaCards[i];
+        break;
+      }
+    }
+    
+    if (pizzaCard) {
+      // Set current pizza details
+      currentPizzaName = pizzaCard.getAttribute('data-pizza-name');
+      currentPizzaDesc = pizzaCard.getAttribute('data-pizza-desc');
+      currentPizzaPrice = parseFloat(pizzaCard.getAttribute('data-pizza-price'));
+      currentPizzaImg = pizzaCard.getAttribute('data-pizza-img');
+      const type = pizzaCard.getAttribute('data-pizza-type');
+      
+      // Update modal content
+      const pizzaNameElement = document.getElementById('pizzaName');
+      const pizzaDescElement = document.getElementById('pizzaDesc');
+      const pizzaPriceElement = document.getElementById('pizzaPrice');
+      
+      if (pizzaNameElement) pizzaNameElement.textContent = currentPizzaName;
+      if (pizzaDescElement) pizzaDescElement.textContent = currentPizzaDesc;
+      if (pizzaPriceElement) pizzaPriceElement.textContent = '$' + currentPizzaPrice.toFixed(2);
+      
+      // Show/hide image based on availability
+      const imageContainer = document.getElementById('pizzaImage');
+      if (imageContainer) {
+        if (currentPizzaImg) {
+          imageContainer.style.display = 'block';
+          const img = imageContainer.querySelector('img');
+          if (img) {
+            img.src = currentPizzaImg;
+          }
+        } else {
+          imageContainer.style.display = 'none';
+        }
+      }
+      
+      // Show/hide toppings section based on pizza type
+      const toppingsSection = document.getElementById('toppingsSection');
+      if (toppingsSection) {
+        if (type === 'specialty') {
+          toppingsSection.style.display = 'none';
+        } else {
+          toppingsSection.style.display = 'block';
+        }
+      }
+    }
+    
+    // Set size
+    document.querySelectorAll('.size-option').forEach(option => {
+      if (option.textContent === size) {
+        option.classList.add('active');
+        selectedSize = size;
+      } else {
+        option.classList.remove('active');
+      }
+    });
+    
+    // Set crust
+    const crustSelect = document.getElementById('crustSelect');
+    if (crustSelect) {
+      for (let i = 0; i < crustSelect.options.length; i++) {
+        if (crustSelect.options[i].text === crust) {
+          crustSelect.selectedIndex = i;
+          break;
+        }
+      }
+    }
+    
+    // Set toppings
+    document.querySelectorAll('.topping-item').forEach(item => {
+      if (toppings.includes(item.textContent)) {
+        item.classList.add('selected');
+      } else {
+        item.classList.remove('selected');
+      }
+    });
+    
+    // Set special instructions
+    const specialInstructionsElement = document.getElementById('specialInstructions');
+    if (specialInstructionsElement) {
+      specialInstructionsElement.value = instructions;
+    }
+    
+    // Update total price based on all selected options and quantity
+    updateModalTotalPrice();
+    
+    // Open the modal
+    modal.show();
+  }
+  
+  // Function to add item to cart or update existing item
+  function addOrUpdateCartItem(name, unitPrice, quantity, size, crust, toppings, instructions) {
+    // Check if identical item already exists in the cart
+    const existingItem = findExistingCartItem(name, size, crust, toppings, instructions);
+    
+    if (existingItem) {
+      // Get quantity container
+      const quantityContainer = existingItem.querySelector('.d-flex.justify-content-between.mb-2');
+      if (!quantityContainer) return;
+      
+      // Get current quantity from the quantity display
+      const quantityDisplay = quantityContainer.querySelector('.quantity-display');
+      if (!quantityDisplay) return;
+      
+      const currentItemQuantity = parseInt(quantityDisplay.textContent);
+      const newItemQuantity = currentItemQuantity + quantity;
+      
+      // Update quantity display
+      quantityDisplay.textContent = newItemQuantity;
+      
+      // Update price (unit price * quantity)
+      const newTotalPrice = (unitPrice * newItemQuantity).toFixed(2);
+      const priceEl = existingItem.querySelector('.fw-semibold:last-child');
+      if (priceEl) {
+        priceEl.textContent = '$' + newTotalPrice;
+      }
+      
+      // Store unit price as data attribute for future calculations
+      if (!existingItem.hasAttribute('data-unit-price')) {
+        existingItem.setAttribute('data-unit-price', unitPrice);
+      }
+      
+      // Add highlight animation
+      existingItem.classList.add('cart-added-animation');
+      setTimeout(() => {
+        existingItem.classList.remove('cart-added-animation');
+      }, 500);
+      
+      // Update total (add quantity * unit price to total)
+      orderTotal += unitPrice * quantity;
+      itemCount += quantity;
+      updateCartSummary();
+    } else {
+      // Create new cart item
+      const cartItems = document.getElementById('cartItems');
+      if (!cartItems) {
+        console.error('Cart items container not found!');
+        return;
+      }
+      
+      const cartItem = document.createElement('div');
+      cartItem.className = 'cart-item cart-added-animation';
+      
+      // Store unit price as data attribute for future calculations
+      cartItem.setAttribute('data-unit-price', unitPrice);
+      
+      // Calculate total price for this item
+      const totalPrice = (unitPrice * quantity).toFixed(2);
+      
+      // Build toppings string
+      let toppingsHtml = '';
+      if (toppings.length > 0) {
+        toppingsHtml = '<p>+ Whole: ' + toppings.join(', ') + '</p>';
+      }
+      
+      // Special instructions
+      let instructionsHtml = '';
+      if (instructions) {
+        instructionsHtml = '<p>Note: ' + instructions + '</p>';
+      }
+      
+      cartItem.innerHTML = 
+        '<div class="d-flex justify-content-between mb-2">' +
+          '<div class="d-flex align-items-center">' +
+            '<button class="btn btn-sm qty-btn qty-decrease me-1" style="padding: 0 8px; font-size: 14px; line-height: 1.5;">-</button>' +
+            '<span class="quantity-display mx-1">' + quantity + '</span>' +
+            '<button class="btn btn-sm qty-btn qty-increase ms-1" style="padding: 0 8px; font-size: 14px; line-height: 1.5;">+</button>' +
+          '</div>' +
+          '<span class="fw-semibold flex-grow-1 ms-3">' + name + '</span>' +
+          '<span class="fw-semibold">$' + totalPrice + '</span>' +
+        '</div>' +
+        '<div class="cart-options">' +
+          '<p>' + size + '</p>' +
+          '<p>+ ' + crust + '</p>' +
+          toppingsHtml +
+          instructionsHtml +
+        '</div>' +
+        '<div class="cart-actions">' +
+          '<button class="edit-item">Edit</button>' +
+          '<button class="remove-item">' +
+            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash delete-icon" viewBox="0 0 16 16">' +
+              '<path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>' +
+              '<path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>' +
+            '</svg>' +
+          '</button>' +
+        '</div>';
+      
+      // Add to cart
+      cartItems.appendChild(cartItem);
+      
+      // Add event listeners for quantity buttons
+      const decreaseBtn = cartItem.querySelector('.qty-decrease');
+      const increaseBtn = cartItem.querySelector('.qty-increase');
+      
+      if (decreaseBtn) {
+        decreaseBtn.addEventListener('click', function() {
+          updateItemQuantity(cartItem, -1);
+        });
+      }
+      
+      if (increaseBtn) {
+        increaseBtn.addEventListener('click', function() {
+          updateItemQuantity(cartItem, 1);
+        });
+      }
+      
+      // Add edit functionality to edit button
+      const editButton = cartItem.querySelector('.edit-item');
+      if (editButton) {
+        editButton.addEventListener('click', function() {
+          populateModalForEdit(cartItem);
+        });
+      }
+      
+      // Add remove functionality to new item
+      const removeButton = cartItem.querySelector('.remove-item');
+      if (removeButton) {
+        removeButton.addEventListener('click', function() {
+          removeCartItem(cartItem);
+        });
+      }
+      
+      // Update total
+      orderTotal += unitPrice * quantity;
+      itemCount += quantity;
+      updateCartSummary();
+      checkEmptyCart();
+    }
+  }
+  
+  // Function to update item quantity
+  function updateItemQuantity(cartItem, change) {
+    // Get quantity display
+    const quantityDisplay = cartItem.querySelector('.quantity-display');
+    if (!quantityDisplay) return;
+    
+    const currentQuantity = parseInt(quantityDisplay.textContent);
+    
+    // Calculate new quantity
+    const newQuantity = currentQuantity + change;
+    
+    // Don't allow quantities less than 1
+    if (newQuantity < 1) {
+      removeCartItem(cartItem);
+      return;
+    }
+    
+    // Update quantity display
+    quantityDisplay.textContent = newQuantity;
+    
+    // Get unit price and calculate new total price
+    const unitPrice = parseFloat(cartItem.getAttribute('data-unit-price'));
+    const newTotalPrice = (unitPrice * newQuantity).toFixed(2);
+    
+    // Update price display
+    const priceEl = cartItem.querySelector('.fw-semibold:last-child');
+    if (priceEl) {
+      priceEl.textContent = '$' + newTotalPrice;
+    }
+    
+    // Update order total and item count
+    orderTotal += unitPrice * change;
+    itemCount += change;
+    updateCartSummary();
+    
+    // Highlight the item to indicate change
+    cartItem.classList.add('cart-added-animation');
+    setTimeout(() => {
+      cartItem.classList.remove('cart-added-animation');
+    }, 500);
+  }
+  
+  // Function to remove cart item
+  function removeCartItem(cartItem) {
+    // Get quantity and price per unit
+    const quantityDisplay = cartItem.querySelector('.quantity-display');
+    if (!quantityDisplay) return;
+    
+    const quantity = parseInt(quantityDisplay.textContent);
+    
+    const priceEl = cartItem.querySelector('.fw-semibold:last-child');
+    if (!priceEl) return;
+    
+    const totalPrice = parseFloat(priceEl.textContent.replace('$', ''));
+    
+    // Animation
+    cartItem.style.opacity = '0';
+    setTimeout(() => {
+      cartItem.remove();
+      
+      // Update total
+      orderTotal -= totalPrice;
+      itemCount -= quantity; // Subtract the right number of items
+      updateCartSummary();
+      checkEmptyCart();
+    }, 300);
+  }
+  
+  // Update cart summary
+  function updateCartSummary() {
+    const orderTotalElement = document.getElementById('orderTotal');
+    const cartCountElement = document.getElementById('cartCount');
+    
+    if (orderTotalElement) {
+      orderTotalElement.textContent = '$' + orderTotal.toFixed(2);
+    }
+    
+    if (cartCountElement) {
+      cartCountElement.textContent = itemCount;
+    }
+  }
+  
+  // Check if cart is empty
+  function checkEmptyCart() {
+    const emptyCart = document.getElementById('emptyCart');
+    if (emptyCart) {
+      if (itemCount === 0) {
+        emptyCart.classList.remove('d-none');
+      } else {
+        emptyCart.classList.add('d-none');
+      }
+    }
+  }
+  
+  // Delivery/Pickup toggle
+  const deliveryBtn = document.getElementById('deliveryBtn');
+  const pickupBtn = document.getElementById('pickupBtn');
+  const addressSection = document.getElementById('addressSection');
+  
+  if (deliveryBtn && pickupBtn && addressSection) {
+    deliveryBtn.addEventListener('click', function() {
+      deliveryBtn.classList.add('btn-dark');
+      deliveryBtn.classList.remove('btn-light');
+      pickupBtn.classList.add('btn-light');
+      pickupBtn.classList.remove('btn-dark');
+      addressSection.style.display = 'flex';
+    });
+    
+    pickupBtn.addEventListener('click', function() {
+      pickupBtn.classList.add('btn-dark');
+      pickupBtn.classList.remove('btn-light');
+      deliveryBtn.classList.add('btn-light');
+      deliveryBtn.classList.remove('btn-dark');
+      addressSection.style.display = 'none';
+    });
+  }
+  
+  
+  
+  
+});
+
+// Final solution that CORRECTLY preserves the location icon when replacing "No Address" text
+document.addEventListener('DOMContentLoaded', function() {
+  // Get the address section
+  const addressSection = document.getElementById('addressSection');
+  if (!addressSection) {
+    console.error('Address section not found');
+    return;
+  }
+  
+  // Get the "Add address" button
+  const addAddressBtn = addressSection.querySelector('button');
+  if (!addAddressBtn) {
+    console.error('Add address button not found');
+    return;
+  }
+  
+  // Get the left side container that has both the icon and the "No address" text
+  const addressDisplay = addressSection.querySelector('.d-flex.align-items-center');
+  if (!addressDisplay) {
+    console.error('Address display not found');
+    return;
+  }
+  
+  // Get the span containing "No address" text
+  const addressSpan = addressDisplay.querySelector('span');
+  if (!addressSpan) {
+    console.error('Address span not found');
+    return;
+  }
+  
+  // Store the original address section classes
+  const originalClasses = addressSection.className;
+  
+  // Create a container for the input field
+  const inputContainer = document.createElement('div');
+  inputContainer.className = 'w-100 mt-2';
+  inputContainer.style.display = 'none';
+  inputContainer.innerHTML = ` 
+      <div class="input-group">
+      <input type="text" class="form-control" id="locationField" placeholder="Enter delivery address">
+      <button class="btn btn-dark" id="saveAddressBtn">Save</button>
+    </div>
+        <div class="address-details">
+		    <div id="delivery-error" class="error-message">We do not deliver here</div>
+            <b>Selected Address Details:</b>
+            <p id="address-display">No address selected yet</p>
+        </div>
+  `;
+  
+  // Convert to block display to force the input to appear below
+  if (addressSection.classList.contains('d-flex')) {
+    // Create a wrapper for the existing content
+    const contentWrapper = document.createElement('div');
+    contentWrapper.className = 'd-flex justify-content-between align-items-center w-100';
+    
+    // Remove the address section from flex display
+    addressSection.classList.remove('d-flex');
+    addressSection.classList.add('d-block');
+    
+    // Move existing children to the wrapper
+    while (addressSection.firstChild) {
+      contentWrapper.appendChild(addressSection.firstChild);
+    }
+    
+    // Add the wrapper back to the address section
+    addressSection.appendChild(contentWrapper);
+  }
+  
+  // Add the input container to the address section
+  addressSection.appendChild(inputContainer);
+  
+  // Handle "Add address" button click
+  addAddressBtn.addEventListener('click', function() {
+    if (inputContainer.style.display === 'none') {
+      // Show the input field
+      inputContainer.style.display = 'block';
+      document.getElementById('locationField').focus();
+      
+      // Pre-fill if editing an existing address
+      if (addressSpan.textContent !== 'No address') {
+        document.getElementById('locationField').value = addressSpan.textContent;
+      }
+      
+      // Change button text
+      addAddressBtn.textContent = 'Cancel';
+    } else {
+      // Hide the input field
+      inputContainer.style.display = 'none';
+      
+      // Reset button text
+      if (addressSpan.textContent !== 'No address') {
+        addAddressBtn.textContent = 'Edit address';
+      } else {
+        addAddressBtn.textContent = 'Add address';
+      }
+    }
+  });
+  
+  // Handle Save button click
+  document.body.addEventListener('click', function(event) {
+    if (event.target.id === 'saveAddressBtn') {
+      saveAddress();
+    }
+  });
+  
+  // Handle Enter key in input field
+  document.body.addEventListener('keydown', function(event) {
+    if (event.target.id === 'locationField' && event.key === 'Enter') {
+      saveAddress();
+    }
+  });
+  
+  // Function to save the address
+  function saveAddress() {
+    const locationField = document.getElementById('locationField');
+    const address = locationField.value.trim();
+    
+    if (address) {
+      // Update the address text (keep the icon)
+      addressSpan.textContent = address;
+      
+      // Remove no-address class
+      addressSection.classList.remove('no-address');
+      
+      // Hide the input field
+      inputContainer.style.display = 'none';
+      
+      // Change button text
+      addAddressBtn.textContent = 'Edit address';
+      
+      // Add success animation
+      addressSection.style.transition = 'background-color 0.5s';
+      addressSection.style.backgroundColor = 'rgba(25, 135, 84, 0.1)';
+      setTimeout(function() {
+        addressSection.style.backgroundColor = '';
+      }, 800);
+    } else {
+      // Show validation error
+      locationField.classList.add('is-invalid');
+      setTimeout(function() {
+        locationField.classList.remove('is-invalid');
+      }, 800);
+    }
+  }
+});
+
+
+	</script>
+
+    <script>
+        // Reference address in Hartford, CT
+        const referenceAddress = "264 S Whitney St, Hartford, CT 06105";
+        let referenceLatLng;
+        
+        // This function will be called when the Google Maps API is loaded
+        function initAutocomplete() {
+            // First, geocode our reference address
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ address: referenceAddress }, function(results, status) {
+                if (status === "OK" && results[0]) {
+                    referenceLatLng = results[0].geometry.location;
+                } else {
+                    console.error("Geocoding failed for reference address: " + status);
+                }
+            });
+            
+            // Create the autocomplete object with Connecticut, US restriction
+            const autocomplete = new google.maps.places.Autocomplete(
+                document.getElementById('locationField'),
+                { 
+                    types: ['address'],
+                    componentRestrictions: { country: 'us' },
+                    bounds: new google.maps.LatLngBounds(
+                        new google.maps.LatLng(40.9509, -73.7276), // SW corner of CT
+                        new google.maps.LatLng(42.0505, -71.7862)  // NE corner of CT
+                    ),
+                    strictBounds: true
+                }
+            );
+            
+            // When a place is selected, update the displayed address information
+            autocomplete.addListener('place_changed', function() {
+                const place = autocomplete.getPlace();
+                if (!place.geometry) {
+                    // If no details available for the place
+                    document.getElementById('address-display').textContent = "No details available for: " + place.name;
+                    return;
+                }
+                
+                // Get the selected address location
+                const selectedLatLng = place.geometry.location;
+                
+                // Format and display the address components
+                const formattedAddress = place.formatted_address;
+                document.getElementById('address-display').textContent = formattedAddress;
+                
+                // Check if the reference location is defined
+                if (referenceLatLng) {
+                    // Calculate distance between selected address and reference address
+                    const distance = calculateDistance(
+                        referenceLatLng.lat(), referenceLatLng.lng(),
+                        selectedLatLng.lat(), selectedLatLng.lng()
+                    );
+                    
+                    // Convert distance to kilometers
+                    const distanceInKm = distance / 1000;
+                    
+                    // Check if distance is more than 5 kilometers
+                    if (distanceInKm > 5) {
+                        // Show error message
+                        document.getElementById('delivery-error').style.display = 'block';
+                        // Reset the text box
+                        document.getElementById('locationField').value = '';
+                    } else {
+                        // Hide error message if previously shown
+                        document.getElementById('delivery-error').style.display = 'none';
+                    }
+                }
+            });
+        }
+        
+        // Function to calculate distance between two coordinates in meters using Haversine formula
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371000; // Radius of Earth in meters
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+            
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                    Math.cos(φ1) * Math.cos(φ2) *
+                    Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const distance = R * c;
+            
+            return distance;
+        }
+    </script>
+    
+    <!-- Load the Google Maps API with Places library -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCfMkUvyNZm68JpwoNJfVrlqdLBVNK-Pno&libraries=places&callback=initAutocomplete" async defer></script>
+
+</body>
+</html>
